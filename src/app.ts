@@ -17,7 +17,7 @@ class App {
     // Initialize models before routes
     initModels().catch(console.error);
 
-    this.app.get('/', (_req, res) => res.json({ ok: true }));
+    this.app.get('/', (_req, res) => res.json({ deployWorked: true }));
   }
 
   private config(): void {
