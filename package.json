@@ -2,13 +2,12 @@
   "name": "wedding-back",
   "version": "1.0.0",
   "description": "",
-  "main": "index.js",
+  "main": "dist/server.js",
   "scripts": {
     "build": "npx -y tsc",
     "db:reset": "npx sequelize-cli db:drop && npx sequelize-cli db:create && npx sequelize-cli db:migrate",
-  
-    "start": "node /src/server.ts",
-    "dev": "nodemon --watch \"./src/**\" ./src/server.ts",
+    "start": "node dist/server.js",
+    "dev": "nodemon --watch \"./src/**\" ./src/server.ts"
   },
   "keywords": [],
   "author": "",
