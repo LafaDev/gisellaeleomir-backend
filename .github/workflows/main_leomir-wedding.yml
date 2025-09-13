@@ -68,13 +68,3 @@ jobs:
           app-name: 'leomir-wedding'
           slot-name: 'Production'
           package: .
-
-      # 👉 NEW STEP: Run Sequelize migrations against your production DB
-      - name: Run Sequelize migrations
-        run: npx sequelize-cli db:migrate --env production
-        env:
-          DB_HOST: ${{ secrets.DB_HOST }}
-          DB_USER: ${{ secrets.DB_USER }}
-          DB_PASSWORD: ${{ secrets.DB_PASSWORD }}
-          DB_NAME: ${{ secrets.DB_NAME }}
-          DB_PORT: ${{ secrets.DB_PORT }}
