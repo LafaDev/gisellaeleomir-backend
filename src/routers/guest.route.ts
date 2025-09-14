@@ -5,6 +5,9 @@ const router = Router();
 const guestController = new GuestController();
 
 // Guest
+router.get('/', guestController.getAllGuests); // Get all guests
+router.get('/:tag', guestController.getGuestByTag)
+
 router.post("/", guestController.createGuest);
 router.patch("/:id", guestController.updateGuest);
 router.delete("/:id", guestController.deleteGuest);
