@@ -1,20 +1,25 @@
-import { Router } from 'express';
-import GuestController from '../controllers/guest.controller';
+import { Router } from "express";
+import GuestController from "../controllers/guest.controller";
 
 const router = Router();
-const controller = new GuestController();
+const guestController = new GuestController();
 
-router.get('/', controller.getAllGuests); // Get all guests
-router.get('/:tag', controller.getGuestByTag); // Get guest by tag
+// Guest
+router.post("/", guestController.createGuest);
+router.patch("/:id", guestController.updateGuest);
+router.delete("/:id", guestController.deleteGuest);
 
-router.post('/', controller.createGuest); // Create guest
-router.post('/:guestId/accompany', controller.createAccompany); // Create accompany
+// Accompany
+router.post("/:guestId/accompany", guestController.createAccompany);
+router.patch("/:guestId/accompany/:id", guestController.updateAccompany);
+router.delete("/accompany/:id", guestController.deleteAccompany);
 
-router.patch('/:id/status', controller.updateStatus); // Update going/confirmed status
-router.patch('/:id', controller.updateGuest); // <-- Update guest name/tag
-router.patch('/:guestId/accompany/:id', controller.updateAccompany); // <-- Update accompany name
+// Status routes
+router.patch("/:id/status", guestController.updateStatus); // Deprecated for "going" toggle
+router.patch("/:id/going", guestController.updateGoingStatus); // ✅ New route
 
-router.delete('/:id', controller.deleteGuest); // Delete guest
-router.delete('/accompany/:id', controller.deleteAccompany); // Delete accompany
+// Guest by tag
+router.get("/tag/:tag", guestController.getGuestByTag);
+router.get("/", guestController.getAllGuests);
 
 export default router;

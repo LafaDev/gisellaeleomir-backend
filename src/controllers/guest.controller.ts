@@ -1,6 +1,5 @@
 import { Request, Response } from 'express';
 import GuestService from '../services/GuestService';
-// import GuestService from '../services/GuestService';
 
 export default class GuestController {
   private _guestService: GuestService;
@@ -45,7 +44,7 @@ export default class GuestController {
   public updateAccompany = async (req: Request, res: Response) => {
     try {
       const guestId = Number(req.params.guestId);
-      const accompanyId = Number(req.params.id); // ✅ fixed: use "id", not "accompanyId"
+      const accompanyId = Number(req.params.id);
       const updated = await this._guestService.updateAccompany(guestId, accompanyId, req.body);
       return res.status(200).json(updated);
     } catch (error) {
@@ -74,12 +73,24 @@ export default class GuestController {
     }
   };
 
-  /** Update going/confirmed status for guest or accompany */
+  /** Update going/confirmed status for guest or accompany (deprecated) */
   public updateStatus = async (req: Request, res: Response) => {
     try {
       const id = Number(req.params.id);
       const { type, going, confirmed } = req.body;
       const updated = await this._guestService.updateStatus(id, type, going, confirmed);
+      return res.status(200).json(updated);
+    } catch (error) {
+      return res.status(500).json({ message: (error as Error).message });
+    }
+  };
+
+  /** Update "going" only if confirmed is true */
+  public updateGoingStatus = async (req: Request, res: Response) => {
+    try {
+      const id = Number(req.params.id);
+      const { type, going } = req.body; // type: 'guest' | 'accompany'
+      const updated = await this._guestService.updateGoingStatus(id, type, going);
       return res.status(200).json(updated);
     } catch (error) {
       return res.status(500).json({ message: (error as Error).message });
@@ -100,9 +111,7 @@ export default class GuestController {
   /** Delete an accompany */
   public deleteAccompany = async (req: Request, res: Response) => {
     try {
-      console.log(req.params);
       const id = Number(req.params.id);
-      console.log(id);
       const result = await this._guestService.deleteAccompany(id);
       return res.status(200).json(result);
     } catch (error) {

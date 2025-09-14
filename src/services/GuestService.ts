@@ -10,40 +10,43 @@ export default class GuestService {
     this._errorHandler = new ErrorHandler();
   }
 
-  /** Validate guest creation / update */
+  /** ------------------ Validation ------------------ */
   private validateGuestBody = (data: any) => {
     const schema = Joi.object({
       name: Joi.string().required().min(2),
       tag: Joi.string().required().min(2),
     });
 
-    const { error, value } = schema.validate(data, { stripUnknown: true }); // ✅ safer
+    const { error, value } = schema.validate(data, { stripUnknown: true });
     if (error) throw this._errorHandler.BadRequest();
     return value;
   };
 
-  /** Validate accompany creation / update */
   private validateAccompanyBody = (data: any) => {
     const schema = Joi.object({
       name: Joi.string().required().min(2),
     });
 
-    const { error, value } = schema.validate(data, { stripUnknown: true }); // ✅ safer
+    const { error, value } = schema.validate(data, { stripUnknown: true });
     if (error) throw this._errorHandler.BadRequest();
     return value;
   };
 
-  /** Create a new guest */
+  /** ------------------ Guest CRUD ------------------ */
   public createGuest = async (data: GuestCreationalAttributes) => {
     const { name, tag } = this.validateGuestBody(data);
 
     const existing = await GuestModel.findOne({ where: { tag } });
     if (existing) throw this._errorHandler.ConflitError();
 
-    return await GuestModel.create({ name, tag, going: false, confirmed: false });
+    return await GuestModel.create({
+      name,
+      tag,
+      going: false,
+      confirmed: false, // Ensure confirmed is always set
+    });
   };
 
-  /** Update guest by ID (partial update allowed) */
   public updateGuest = async (id: number, data: Partial<GuestCreationalAttributes>) => {
     const guest = await GuestModel.findByPk(id);
     if (!guest) throw this._errorHandler.NotFound();
@@ -57,7 +60,14 @@ export default class GuestService {
     return guest;
   };
 
-  /** Create an accompany for a guest */
+  public deleteGuest = async (id: number) => {
+    const guest = await GuestModel.findByPk(id);
+    if (!guest) throw this._errorHandler.NotFound();
+    await guest.destroy();
+    return { message: 'Guest deleted successfully' };
+  };
+
+  /** ------------------ Accompany CRUD ------------------ */
   public createAccompany = async (guestId: number, data: AccompanyCreationalAttributes) => {
     const { name } = this.validateAccompanyBody(data);
 
@@ -68,11 +78,10 @@ export default class GuestService {
       guestId,
       name,
       going: false,
-      confirmed: false,
+      confirmed: false, // Ensure confirmed is always set
     });
   };
 
-  /** Update accompany by ID (partial update allowed) */
   public updateAccompany = async (
     guestId: number,
     accompanyId: number,
@@ -89,7 +98,46 @@ export default class GuestService {
     return accompany;
   };
 
-  /** Update guest or accompany status */
+  public deleteAccompany = async (id: number) => {
+    const accompany = await AccompanyModel.findByPk(id);
+    if (!accompany) throw this._errorHandler.NotFound();
+    await accompany.destroy();
+    return { message: 'Accompany deleted successfully' };
+  };
+
+  /** ------------------ Status Updates ------------------ */
+  /** Update "going" only if confirmed is true */
+  public updateGoingStatus = async (
+    id: number,
+    type: 'guest' | 'accompany',
+    going: boolean
+  ) => {
+    if (type === 'guest') {
+      const guest = await GuestModel.findByPk(id);
+      if (!guest) throw this._errorHandler.NotFound();
+
+      if (!guest.confirmed) {
+        throw this._errorHandler.BadRequest();
+      }
+
+      guest.going = going;
+      await guest.save();
+      return guest;
+    } else {
+      const accompany = await AccompanyModel.findByPk(id);
+      if (!accompany) throw this._errorHandler.NotFound();
+
+      if (!accompany.confirmed) {
+        throw this._errorHandler.BadRequest();
+      }
+
+      accompany.going = going;
+      await accompany.save();
+      return accompany;
+    }
+  };
+
+  /** Deprecated: Do not use for frontend "going" toggle anymore */
   public updateStatus = async (
     id: number,
     type: 'guest' | 'accompany',
@@ -113,7 +161,7 @@ export default class GuestService {
     }
   };
 
-  /** Find guest by tag + all accompanies */
+  /** ------------------ Fetch Guests ------------------ */
   public findByTag = async (tag: string) => {
     const guest = await GuestModel.findOne({
       where: { tag },
@@ -125,7 +173,6 @@ export default class GuestService {
     return guest;
   };
 
-  /** Find all guests + accompanies */
   public findAll = async () => {
     const guests = await GuestModel.findAll({
       include: [{ model: AccompanyModel, as: 'accompany' }],
@@ -139,21 +186,5 @@ export default class GuestService {
       ...g.toJSON(),
       accompany: g.accompany ?? [],
     }));
-  };
-
-  /** Delete guest */
-  public deleteGuest = async (id: number) => {
-    const guest = await GuestModel.findByPk(id);
-    if (!guest) throw this._errorHandler.NotFound();
-    await guest.destroy();
-    return { message: 'Guest deleted successfully' };
-  };
-
-  /** Delete accompany */
-  public deleteAccompany = async (id: number) => {
-    const accompany = await AccompanyModel.findByPk(id);
-    if (!accompany) throw this._errorHandler.NotFound();
-    await accompany.destroy();
-    return { message: 'Accompany deleted successfully' };
   };
 }
